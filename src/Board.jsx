@@ -2,7 +2,7 @@ import { useContext } from "react"
 import { Square } from "./Square"
 import { GameContext } from "./Game"
 
-export const Board = ({size}) => {
+export const Board = ({size = 3}) => {
     // const gameState = useContext(GameContext)
     const createBoard = () => {
         const board = []
@@ -12,11 +12,9 @@ export const Board = ({size}) => {
                 board.push(<Square key={`${i}-${j}`} position={{r:i,c:j}}></Square>)
             }
         }
-        return board
+        return <div className={`grid grid-rows-${size} grid-cols-${size}`}>{board}</div>
     }
     return <div className="bg-dark-300 w-fit rounded-xl p-2 relative after:absolute">
-        <div className={`grid grid-rows-${size} grid-cols-${size}`}>
-            {createBoard()}
-        </div>
+        {createBoard()}
     </div>
 }
