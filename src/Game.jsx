@@ -26,101 +26,33 @@ export const Game = () => {
         setGameState({...gameState, ...newGameState1})
     }
     const checkWinState = ({lastMove, board, remainingMove}) => {
+        const directory = {
+            'horizontal': [0, 1],
+            'vertical': [1, 0],
+            'topLeft': [1, 1],
+            'topRight': [-1, 1]
+        }
         const directions = {horizontal: 1, vertical: 1, topLeft: 1, topRight: 1}
-        // Check vertical
-        // Up
-        let temp = {r: lastMove.position.r - 1, c: lastMove.position.c}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.vertical++
-            temp = {r: lastMove.position.r - 2, c: lastMove.position.c}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.vertical++
+        for (let direction of Object.keys(directions)) {
+            for (let i = 1; i < gameState.winCondition; i++) {
+                let temp = {r: lastMove.position.r + i * directory[direction][0], c: lastMove.position.c + i * directory[direction][1]}
+                if (!checkValidSquare(temp)) 
+                    break;
+                if (board[temp.r][temp.c] !== lastMove.move) 
+                    break;
+                directions[direction] = directions[direction] + 1
             }
-        }
-        // Down
-        temp = {r: lastMove.position.r + 1, c: lastMove.position.c}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.vertical++
-            temp = {r: lastMove.position.r + 2, c: lastMove.position.c}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.vertical++
-            }
-        }
-        // Check horizontal
-        // Left
-        temp = {r: lastMove.position.r, c: lastMove.position.c - 1}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.horizontal++
-            temp = {r: lastMove.position.r, c: lastMove.position.c - 2}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.horizontal++
-            }
-        }
-        // Right
-        temp = {r: lastMove.position.r, c: lastMove.position.c + 1}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.horizontal++
-            temp = {r: lastMove.position.r, c: lastMove.position.c + 2}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.horizontal++
-            }
-        }
-        // Check topLeft
-        // TopLeft
-        temp = {r: lastMove.position.r - 1, c: lastMove.position.c - 1}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.topLeft++
-            temp = {r: lastMove.position.r - 2, c: lastMove.position.c - 2}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.topLeft++
-            }
-        }
-        // DownRight
-        temp = {r: lastMove.position.r + 1, c: lastMove.position.c + 1}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.topLeft++
-            temp = {r: lastMove.position.r + 2, c: lastMove.position.c + 2}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.topLeft++
-            }
-        }
-        // Check topRight
-        // TopRight
-        temp = {r: lastMove.position.r - 1, c: lastMove.position.c + 1}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.topRight++
-            temp = {r: lastMove.position.r - 2, c: lastMove.position.c + 2}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.topRight++
-            }
-        }
-        // DownLeft
-        temp = {r: lastMove.position.r + 1, c: lastMove.position.c - 1}
-        if (checkValidSquare(temp)) {
-            if (board[temp.r][temp.c] == lastMove.move) 
-                directions.topRight++
-            temp = {r: lastMove.position.r + 2, c: lastMove.position.c - 2}
-            if (checkValidSquare(temp)) {
-                if (board[temp.r][temp.c] == lastMove.move) 
-                    directions.topRight++
+            for (let i = 1; i < gameState.winCondition; i++) {
+                let temp = {r: lastMove.position.r - i * directory[direction][0], c: lastMove.position.c - i * directory[direction][1]}
+                if (!checkValidSquare(temp)) 
+                    break;
+                if (board[temp.r][temp.c] !== lastMove.move) 
+                    break;
+                directions[direction] = directions[direction] + 1
             }
         }
         for (let direction of Object.keys(directions)) {
-            if (directions[direction] >= 3) {
+            if (directions[direction] >= gameState.winCondition) {
                 board = highlightWinningSymbol(direction, lastMove, board)
                 return (
                     {
@@ -153,32 +85,27 @@ export const Game = () => {
     const highlightWinningSymbol = (direction, lastMove, board) => {
         const newBoard = board.map(row => [...row])
         const directory = {
-            'horizontal': [0, 1, 0, 2, 0, -1, 0, -2],
-            'vertical': [1, 0, 2, 0, -1, 0, -2, 0],
-            'topLeft': [1, 1, 2, 2, -1, -1, -2, -2],
-            'topRight': [-1, 1, -2, 2, 1, -1, 2, -2]
+            'horizontal': [0, 1],
+            'vertical': [1, 0],
+            'topLeft': [1, 1],
+            'topRight': [-1, 1]
         }
-        let add = directory[direction]
-        let temp = {r: lastMove.position.r + add[0], c: lastMove.position.c + add[1]}
         newBoard[lastMove.position.r][lastMove.position.c] += '-win'
-        if (checkValidSquare(temp)) {
-            if (newBoard[temp.r][temp.c] == lastMove.move) 
-                newBoard[temp.r][temp.c] += '-win'
-            temp = {r: lastMove.position.r + add[2], c: lastMove.position.c + add[3]}
-            if (checkValidSquare(temp)) {
-                if (newBoard[temp.r][temp.c] == lastMove.move) 
-                    newBoard[temp.r][temp.c] += '-win'
-            }
+        for (let i = 1; i < gameState.winCondition; i++) {
+            let temp = {r: lastMove.position.r + i * directory[direction][0], c: lastMove.position.c + i * directory[direction][1]}
+            if (!checkValidSquare(temp)) 
+                break;
+            if (board[temp.r][temp.c] !== lastMove.move) 
+                break;
+            newBoard[temp.r][temp.c] += '-win'
         }
-        temp = {r: lastMove.position.r + add[4], c: lastMove.position.c + add[5]}
-        if (checkValidSquare(temp)) {
-            if (newBoard[temp.r][temp.c] == lastMove.move) 
-                newBoard[temp.r][temp.c] += '-win'
-            temp = {r: lastMove.position.r + add[6], c: lastMove.position.c + add[7]}
-            if (checkValidSquare(temp)) {
-                if (newBoard[temp.r][temp.c] == lastMove.move) 
-                    newBoard[temp.r][temp.c] += '-win'
-            }
+        for (let i = 1; i < gameState.winCondition; i++) {
+            let temp = {r: lastMove.position.r - i * directory[direction][0], c: lastMove.position.c - i * directory[direction][1]}
+            if (!checkValidSquare(temp)) 
+                break;
+            if (board[temp.r][temp.c] !== lastMove.move) 
+                break;
+            newBoard[temp.r][temp.c] += '-win'
         }
         return newBoard
     }
@@ -214,10 +141,10 @@ export const Game = () => {
     },[options, gameState])
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
-            <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row items-center justify-center gap-5">
+            <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row justify-center gap-5">
                 <div className=" flex flex-col justify-center items-center gap-y-2 ">
                     <div className="justify-center flex w-max">
-                        <Board size={gameState.boardSize}></Board>
+                        <Board></Board>
                     </div>
                     <p className={`${['X-WIN', 'O-WIN', 'TIE'].includes(gameState.state) 
                         ? "text-light-500 text-5xl" : "text-dark-500 text-xl"}`}>
