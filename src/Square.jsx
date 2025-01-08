@@ -25,11 +25,11 @@ export const Square = ({position}) => {
     useEffect(()=>{},[gameState])
     if (position.r < 0 || position.r >= gameState.boardSize || position.c < 0 || position.c >= gameState.boardSize) return <></>
     return (
-        <button className={`w-32 aspect-square flex items-center justify-center rounded-xl 
+        <button className={`${gameState.boardSize < 5 ? "w-16" : "w-12"} md:w-32 aspect-square flex items-center justify-center rounded-xl 
             ${gameState.board[position.r][position.c]==="" ? "hover:bg-dark-500 duration-200 bg-dark-400" : "bg-dark-500"}`
             } 
             disabled={gameState.board[position.r][position.c] !== ""} onClick={handleClick}>
-            <p className={`text-8xl
+            <p className={`${gameState.boardSize < 5 ? "text-5xl" : "text-4xl"} md:text-8xl
                 ${(['o-win', 'x-win'].includes(gameState.board[position.r][position.c])) ? 
                     "drop-shadow-[0_10px_10px_rgba(255,255,255,0.9)]" : ""}`}>
                 {gameState.board[position.r][position.c].length > 0 ? gameState.board[position.r][position.c][0] : ""}

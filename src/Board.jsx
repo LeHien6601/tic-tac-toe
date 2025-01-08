@@ -18,7 +18,7 @@ export const Board = () => {
         console.log(gameState.boardSize)
         createBoard()
     },[gameState.boardSize])
-    return <div className="bg-dark-300 w-fit rounded-xl p-2 relative after:absolute scale-75 md:scale-100 aspect-square">
+    return <div className="bg-dark-300 w-fit rounded-xl p-2 aspect-square">
         {squares} 
     </div>
 }

@@ -24,8 +24,9 @@ export const Game = () => {
     const [isChanged, setIsChanged] = useState(false)
 
     const changeGameState = (newState) => {
-        let newGameState1 = checkWinState(newState)
-        setGameState({...gameState, ...newGameState1})
+        let newGameState = checkWinState(newState)
+        console.log(newGameState)
+        setGameState({...gameState, ...newGameState})
     }
     const checkWinState = ({lastMove, board, remainingMove}) => {
         const directory = {
@@ -144,8 +145,8 @@ export const Game = () => {
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
             <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row justify-center gap-5">
-                <div className=" flex flex-col justify-center items-center gap-y-2">
-                    <div className="justify-center flex w-max">
+                <div className=" flex flex-col items-center gap-y-2">
+                    <div className="flex w-max">
                         <Board></Board>
                     </div>
                     <p className={`${['X-WIN', 'O-WIN', 'TIE'].includes(gameState.state) 
