@@ -1,28 +1,22 @@
 import { createContext, useEffect, useState } from "react"
 import { Board } from "./Board"
 
-const boardSize = 3
-export const GameContext = createContext(
-    {
-        state: "WAIT-X", 
-        board: Array(boardSize).fill(Array(boardSize).fill('')),
-        lastMove: {position:{r:0, c:0}, move:''},
-        remainingMove: boardSize*boardSize
-    }
-)
+const boardSize = 4
+export const GameContext = createContext()
 export const Game = () => {
     const [gameState, setGameState] = useState(
         {
             state: "WAIT-X", 
             board: Array(boardSize).fill(Array(boardSize).fill('')),
             lastMove: {position:{r:0, c:0}, move:''},
-            remainingMove: boardSize*boardSize
+            remainingMove: boardSize*boardSize,
+            mode: '2P'
         }
     )
 
     const changeGameState = (newState) => {
         let newGameState1 = checkWinState(newState)
-        setGameState(newGameState1)
+        setGameState({...gameState, ...newGameState1})
     }
     const checkWinState = ({lastMove, board, remainingMove}) => {
         const directions = {horizontal: 1, vertical: 1, topLeft: 1, topRight: 1}
@@ -118,7 +112,6 @@ export const Game = () => {
                     directions.topRight++
             }
         }
-        console.log(directions)
         for (let direction of Object.keys(directions)) {
             if (directions[direction] >= 3) {
                 board = highlightWinningSymbol(direction, lastMove, board)
@@ -141,7 +134,6 @@ export const Game = () => {
                     remainingMove: remainingMove
                 }
             )
-        console.log(remainingMove)
         return (
             {
                 state: lastMove.move === 'x' ? 'WAIT-O' : 'WAIT-X',
@@ -157,7 +149,7 @@ export const Game = () => {
             'horizontal': [0, 1, 0, 2, 0, -1, 0, -2],
             'vertical': [1, 0, 2, 0, -1, 0, -2, 0],
             'topLeft': [1, 1, 2, 2, -1, -1, -2, -2],
-            'topRight': [-1, 1, -2, 2, 1, -1, 1, -2]
+            'topRight': [-1, 1, -2, 2, 1, -1, 2, -2]
         }
         let add = directory[direction]
         let temp = {r: lastMove.position.r + add[0], c: lastMove.position.c + add[1]}
@@ -191,19 +183,46 @@ export const Game = () => {
             state: "WAIT-X", 
             board: Array(boardSize).fill(Array(boardSize).fill('')),
             lastMove: {position:{r:0, c:0}, move:''},
-            remainingMove: boardSize*boardSize
+            remainingMove: boardSize*boardSize,
+            mode: '2P'
         })
     }
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
-            <div className="bg-dark-400 p-2 m-2 rounded-xl flex justify-center">
+            <div className="bg-dark-400 p-2 m-2 rounded-xl flex justify-center gap-x-20">
                 <div className="flex flex-col justify-center items-center gap-y-2">
                     <Board size={boardSize} changeBoard={boardSize}></Board>
-                    <p className="text-xl">{gameState.state}</p>
+                    <p className={`${['X-WIN', 'O-WIN', 'TIE'].includes(gameState.state) 
+                        ? "text-light-500 text-5xl" : "text-dark-500 text-xl"}`}>
+                        {gameState.state}
+                    </p>
                     <button className="bg-dark-500 p-2 text-dark-300 text-xl rounded-xl hover:scale-110 duration-200"
                         onClick={handleRestart}>
                         RESTART
                     </button>
+                </div>
+                <div className="p-3 text-light-500 opacity-80 flex flex-col gap-y-2 bg-dark-500 rounded-xl">
+                    <p className="text-3xl">Options</p>
+                    <div>
+                        <p className="text-2xl">Gamemode</p>
+                        <div className="flex flex-wrap gap-2">
+                            <button className={`${gameState.mode === '2P' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setGameState({...gameState, mode: '2P'})}>
+                                2 Players
+                            </button>
+                            <button className={`${gameState.mode === 'AI-0' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setGameState({...gameState, mode: 'AI-0'})}>
+                                AI lv.0
+                            </button>
+                            <button className={`${gameState.mode === 'AI-1' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setGameState({...gameState, mode: 'AI-1'})}>
+                                AI lv.1
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </GameContext.Provider>

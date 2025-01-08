@@ -17,5 +17,13 @@ export default {
     },
   },
   plugins: [],
+  safelist: [
+    {
+      pattern: /grid-cols-(3|4|5|6|7|8|9|10|0)/
+    },
+    {
+      pattern: /grid-rows-(3|4|5|6|7|8|9|10|0)/
+    },
+  ]
 }
 
