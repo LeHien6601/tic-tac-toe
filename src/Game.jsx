@@ -12,22 +12,26 @@ export const Game = () => {
             mode: '2P',
             winCondition: 3,
             boardSize: 3,
-            AI: 'o'
+            AI: 'O'
         }
     )
     const [options, setOptions] = useState({
         boardSize: 3,
         winCondition: 3,
         mode: '2P',
-        AI: 'o'
+        AI: 'O'
     })
     const [isChanged, setIsChanged] = useState(false)
 
     const changeGameState = (newState) => {
         let newGameState = checkWinState(newState)
-        console.log(newGameState)
         setGameState({...gameState, ...newGameState})
     }
+    const handleAI = () => {
+        if (gameState.mode === '2P') return
+        if (gameState.state !== 'WAIT-'+gameState.AI) return
+        console.log("AI play " + gameState.AI)
+    } 
     const checkWinState = ({lastMove, board, remainingMove}) => {
         const directory = {
             'horizontal': [0, 1],
@@ -125,23 +129,28 @@ export const Game = () => {
         })
     }
     const handleApplyChanges = () => {
-        console.log(options)
         setGameState({
             ...gameState,
             state: "WAIT-X",
             board: Array(options.boardSize).fill(Array(options.boardSize).fill('')),
             lastMove: {position:{r:0, c:0}, move:''},
             remainingMove: options.boardSize*options.boardSize,
-            winCondition: options.winCondition,
-            mode: options.mode,
-            boardSize: options.boardSize
+            ...options
         })
     }
     useEffect(()=>{
-        setIsChanged(options.boardSize !== gameState.boardSize 
-            || options.mode !== gameState.mode 
-            || options.winCondition !== gameState.winCondition)
-    },[options, gameState])
+        let temp = false
+        for (let field of Object.keys(options)) {
+            if (options[field] !== gameState[field]) {
+                temp = true
+                break;
+            }
+        }
+        setIsChanged(temp)
+    },[options])
+    useEffect(()=>{
+        handleAI()
+    },[gameState])
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
             <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row justify-center gap-5">
@@ -183,14 +192,14 @@ export const Game = () => {
                     {options.mode !== '2P' && <div>
                         <p className="text-2xl">Your symbol</p>
                         <div className="flex flex-wrap text-wrap gap-2">
-                            <button className={`${options.AI === 'o' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                            <button className={`${options.AI === 'O' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
                                 p-2 rounded-xl hover:scale-110 duration-200`}
-                                onClick={() => setOptions({...options, AI: 'o'})}>
+                                onClick={() => setOptions({...options, AI: 'O'})}>
                                 X
                             </button>
-                            <button className={`${options.AI === 'x' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                            <button className={`${options.AI === 'X' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
                                 p-2 rounded-xl hover:scale-110 duration-200`}
-                                onClick={() => setOptions({...options, AI: 'x'})}>
+                                onClick={() => setOptions({...options, AI: 'X'})}>
                                 O
                             </button>
                         </div>
