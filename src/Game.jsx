@@ -142,7 +142,7 @@ export const Game = () => {
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
             <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row justify-center gap-5">
-                <div className=" flex flex-col justify-center items-center gap-y-2 ">
+                <div className=" flex flex-col justify-center items-center gap-y-2">
                     <div className="justify-center flex w-max">
                         <Board></Board>
                     </div>

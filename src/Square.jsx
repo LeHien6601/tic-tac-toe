@@ -23,6 +23,7 @@ export const Square = ({position}) => {
         }
     }
     useEffect(()=>{},[gameState])
+    if (position.r < 0 || position.r >= gameState.boardSize || position.c < 0 || position.c >= gameState.boardSize) return <></>
     return (
         <button className={`w-32 aspect-square flex items-center justify-center rounded-xl 
             ${gameState.board[position.r][position.c]==="" ? "hover:bg-dark-500 duration-200 bg-dark-400" : "bg-dark-500"}`
