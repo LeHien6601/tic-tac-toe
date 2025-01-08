@@ -11,13 +11,15 @@ export const Game = () => {
             remainingMove: 9,
             mode: '2P',
             winCondition: 3,
-            boardSize: 3
+            boardSize: 3,
+            AI: 'o'
         }
     )
     const [options, setOptions] = useState({
         boardSize: 3,
         winCondition: 3,
-        mode: '2P'
+        mode: '2P',
+        AI: 'o'
     })
     const [isChanged, setIsChanged] = useState(false)
 
@@ -177,6 +179,21 @@ export const Game = () => {
                             </button>
                         </div>
                     </div>
+                    {options.mode !== '2P' && <div>
+                        <p className="text-2xl">Your symbol</p>
+                        <div className="flex flex-wrap text-wrap gap-2">
+                            <button className={`${options.AI === 'o' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, AI: 'o'})}>
+                                X
+                            </button>
+                            <button className={`${options.AI === 'x' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, AI: 'x'})}>
+                                O
+                            </button>
+                        </div>
+                    </div>}
                     <div>
                         <p className="text-2xl">Grid's size</p> 
                         <select className="p-2 rounded-xl bg-dark-400 text-xl" defaultValue={gameState.boardSize}
