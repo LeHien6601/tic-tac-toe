@@ -12,14 +12,16 @@ export const Game = () => {
             mode: '2P',
             winCondition: 3,
             boardSize: 3,
-            AI: 'O'
+            AI: 'O',
+            winEvenBeBlocked: true
         }
     )
     const [options, setOptions] = useState({
         boardSize: 3,
         winCondition: 3,
         mode: '2P',
-        AI: 'O'
+        AI: 'O',
+        winEvenBeBlocked: true
     })
     const [isChanged, setIsChanged] = useState(false)
 
@@ -59,7 +61,9 @@ export const Game = () => {
             }
         }
         for (let direction of Object.keys(directions)) {
-            if (directions[direction] >= gameState.winCondition) {
+            //WIN
+            if ((directions[direction] > gameState.winCondition)
+                || (directions[direction] === gameState.winCondition && gameState.winEvenBeBlocked)) {
                 board = highlightWinningSymbol(direction, lastMove, board)
                 return (
                     {
@@ -70,8 +74,46 @@ export const Game = () => {
                     }
                 )
             }
+            //Check if blocked
+            if (directions[direction] === gameState.winCondition && !gameState.winEvenBeBlocked) {
+                let block = 0
+                for (let i = 1; i <= gameState.winCondition; i++) {
+                    let temp = {r: lastMove.position.r + i * directory[direction][0], c: lastMove.position.c + i * directory[direction][1]}
+                    if (!checkValidSquare(temp)) 
+                        break;
+                    if (board[temp.r][temp.c] === '')
+                        break;
+                    if (board[temp.r][temp.c] !== lastMove.move) {
+                        block++;
+                        break;
+                    }
+                }
+                for (let i = 1; i <= gameState.winCondition; i++) {
+                    let temp = {r: lastMove.position.r - i * directory[direction][0], c: lastMove.position.c - i * directory[direction][1]}
+                    if (!checkValidSquare(temp)) 
+                        break;
+                    if (board[temp.r][temp.c] === '')
+                        break;
+                    if (board[temp.r][temp.c] !== lastMove.move) {
+                        block++;
+                        break;
+                    }
+                }
+                //WIN
+                if (block < 2) {
+                    board = highlightWinningSymbol(direction, lastMove, board)
+                    return (
+                        {
+                            state: lastMove.move.toUpperCase()+'-WIN',
+                            lastMove: lastMove,
+                            board: board,
+                            remainingMove: remainingMove
+                        }
+                    )
+                }
+            }
         }
-        if (remainingMove === 0) 
+        if (remainingMove === 0)  {
             return (
                 {
                     state:'TIE',
@@ -80,6 +122,7 @@ export const Game = () => {
                     remainingMove: remainingMove
                 }
             )
+        }
         return (
             {
                 state: lastMove.move === 'x' ? 'WAIT-O' : 'WAIT-X',
@@ -191,7 +234,7 @@ export const Game = () => {
                     </div>
                     {options.mode !== '2P' && <div>
                         <p className="text-2xl">Your symbol</p>
-                        <div className="flex flex-wrap text-wrap gap-2">
+                        <div className="flex gap-2">
                             <button className={`${options.AI === 'O' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
                                 p-2 rounded-xl hover:scale-110 duration-200`}
                                 onClick={() => setOptions({...options, AI: 'O'})}>
@@ -212,6 +255,10 @@ export const Game = () => {
                             <option value={4}>4x4</option>
                             <option value={5}>5x5</option>
                             <option value={6}>6x6</option>
+                            <option value={7}>7x7</option>
+                            <option value={8}>8x8</option>
+                            <option value={9}>9x9</option>
+                            <option value={10}>10x10</option>
                         </select>
                     </div>
                     <div>
@@ -222,6 +269,21 @@ export const Game = () => {
                             <option value={4}>4</option>
                             <option value={5}>5</option>
                         </select>
+                    </div>
+                    <div>
+                        <p className="text-2xl">Still win when be blocked both sides of the sequence of symbols</p>
+                        <div className="flex gap-2">
+                            <button className={`${options.winEvenBeBlocked ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, winEvenBeBlocked: true})}>
+                                YES
+                            </button>
+                            <button className={`${!options.winEvenBeBlocked ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, winEvenBeBlocked: false})}>
+                                NO
+                            </button>
+                        </div>
                     </div>
                     <div className="justify-center flex">
                         <button className={`p-2 items-end text-xl rounded-xl bg-dark-300 ${isChanged ? "hover:scale-110 duration-200":"opacity-50"}`}

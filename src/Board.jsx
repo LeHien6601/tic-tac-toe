@@ -15,7 +15,6 @@ export const Board = () => {
         setSquares(<div className={`grid grid-cols-${gameState.boardSize} grid-rows-${gameState.boardSize} gap-2`}>{board}</div>)
     }
     useEffect(()=>{
-        console.log(gameState.boardSize)
         createBoard()
     },[gameState.boardSize])
     return <div className="bg-dark-300 w-fit rounded-xl p-2 aspect-square">
