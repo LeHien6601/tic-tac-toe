@@ -197,7 +197,7 @@ export const Game = () => {
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
             <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row justify-center gap-5">
-                <div className=" flex flex-col items-center gap-y-2">
+                <div className=" flex flex-col gap-y-2 items-start md:items-center overflow-scroll md:overflow-clip">
                     <div className="flex w-max">
                         <Board></Board>
                     </div>
