@@ -1,4 +1,4 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect } from "react";
 import { GameContext } from "./Game";
 
 export const Square = ({position}) => {
@@ -8,15 +8,15 @@ export const Square = ({position}) => {
         if (gameState.state in ['TIE', 'X-WIN', 'Y-WIN']) return
         if (gameState.state == 'WAIT-X') {
             const newBoard = gameState.board.map(row => [...row])
-            newBoard[position.r][position.c] = 'x' 
-            const newLastMove = {move:"x", position}
-            changeGameState({state: 'WAIT-O', board: newBoard, lastMove: newLastMove, remainingMove: gameState.remainingMove-1})
+            newBoard[position.r][position.c] = 'X' 
+            const newLastMove = {move:"X", position}
+            changeGameState({board: newBoard, lastMove: newLastMove, remainingMove: gameState.remainingMove-1})
         }
         else if (gameState.state == 'WAIT-O') {
             const newBoard = gameState.board.map(row => [...row])
-            newBoard[position.r][position.c] = 'o'
-            const newLastMove = {move:"o", position}
-            changeGameState({state: 'WAIT-X', board: newBoard, lastMove: newLastMove, remainingMove: gameState.remainingMove-1})
+            newBoard[position.r][position.c] = 'O'
+            const newLastMove = {move:"O", position}
+            changeGameState({board: newBoard, lastMove: newLastMove, remainingMove: gameState.remainingMove-1})
         }
         else {
             console.log(gameState.state)
@@ -30,7 +30,7 @@ export const Square = ({position}) => {
             } 
             disabled={gameState.board[position.r][position.c] !== ""} onClick={handleClick}>
             <p className={`${gameState.boardSize < 5 ? "text-5xl md:text-8xl" : "text-4xl md:text-6xl"} 
-                ${(['o-win', 'x-win'].includes(gameState.board[position.r][position.c])) ? 
+                ${(['O-WIN', 'X-WIN'].includes(gameState.board[position.r][position.c])) ? 
                     "drop-shadow-[0_10px_10px_rgba(255,255,255,0.9)]" : ""}`}>
                 {gameState.board[position.r][position.c].length > 0 ? gameState.board[position.r][position.c][0] : ""}
             </p>

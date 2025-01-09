@@ -33,6 +33,27 @@ export const Game = () => {
         if (gameState.mode === '2P') return
         if (gameState.state !== 'WAIT-'+gameState.AI) return
         console.log("AI play " + gameState.AI)
+        const newBoard = gameState.board.map(row => [...row])
+        const remainingSquares = []
+        for (let i = 0; i < gameState.boardSize; i++) {
+            for (let j = 0; j < gameState.boardSize; j++) {
+                if (newBoard[i][j] === '') 
+                    remainingSquares.push({r:i, c:j, value:0})
+            }
+        }
+        //Get square with max value
+        let maxValue = Math.max(...remainingSquares.map(item => item.value));
+        const maxItems = remainingSquares.filter(item => item.value === maxValue);
+        const randomIndex = Math.floor(Math.random() * maxItems.length);
+        const maxItem = maxItems[randomIndex]
+        //AI plays
+        newBoard[maxItem.r][maxItem.c] = gameState.AI
+        changeGameState(
+            {
+                board: newBoard, 
+                lastMove: {move: gameState.AI, position: {r: maxItem.r, c: maxItem.c}},
+                remainingMove: gameState.remainingMove - 1
+            })
     } 
     const checkWinState = ({lastMove, board, remainingMove}) => {
         const directory = {
@@ -67,7 +88,7 @@ export const Game = () => {
                 board = highlightWinningSymbol(direction, lastMove, board)
                 return (
                     {
-                        state: lastMove.move.toUpperCase()+'-WIN',
+                        state: lastMove.move+'-WIN',
                         lastMove: lastMove,
                         board: board,
                         remainingMove: remainingMove
@@ -104,7 +125,7 @@ export const Game = () => {
                     board = highlightWinningSymbol(direction, lastMove, board)
                     return (
                         {
-                            state: lastMove.move.toUpperCase()+'-WIN',
+                            state: lastMove.move+'-WIN',
                             lastMove: lastMove,
                             board: board,
                             remainingMove: remainingMove
@@ -125,7 +146,7 @@ export const Game = () => {
         }
         return (
             {
-                state: lastMove.move === 'x' ? 'WAIT-O' : 'WAIT-X',
+                state: lastMove.move === 'X' ? 'WAIT-O' : 'WAIT-X',
                 lastMove: lastMove,
                 board: board,
                 remainingMove: remainingMove
@@ -140,14 +161,14 @@ export const Game = () => {
             'topLeft': [1, 1],
             'topRight': [-1, 1]
         }
-        newBoard[lastMove.position.r][lastMove.position.c] += '-win'
+        newBoard[lastMove.position.r][lastMove.position.c] += '-WIN'
         for (let i = 1; i < gameState.winCondition; i++) {
             let temp = {r: lastMove.position.r + i * directory[direction][0], c: lastMove.position.c + i * directory[direction][1]}
             if (!checkValidSquare(temp)) 
                 break;
             if (board[temp.r][temp.c] !== lastMove.move) 
                 break;
-            newBoard[temp.r][temp.c] += '-win'
+            newBoard[temp.r][temp.c] += '-WIN'
         }
         for (let i = 1; i < gameState.winCondition; i++) {
             let temp = {r: lastMove.position.r - i * directory[direction][0], c: lastMove.position.c - i * directory[direction][1]}
@@ -155,7 +176,7 @@ export const Game = () => {
                 break;
             if (board[temp.r][temp.c] !== lastMove.move) 
                 break;
-            newBoard[temp.r][temp.c] += '-win'
+            newBoard[temp.r][temp.c] += '-WIN'
         }
         return newBoard
     }
@@ -186,11 +207,12 @@ export const Game = () => {
         for (let field of Object.keys(options)) {
             if (options[field] !== gameState[field]) {
                 temp = true
+                console.log(options[field] +" "+ gameState[field])
                 break;
             }
         }
         setIsChanged(temp)
-    },[options])
+    },[options, gameState.AI, gameState.mode, gameState.winCondition, gameState.winEvenBeBlocked, gameState.boardSize])
     useEffect(()=>{
         handleAI()
     },[gameState])
