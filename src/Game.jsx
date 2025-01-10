@@ -70,7 +70,7 @@ export const Game = () => {
         }
         //Get all remaining squares for AI
         const remainingSquares = getAllRemainingSquare(gameState)
-        const depth = 2
+        const depth = (gameState.mode === 'AI-0' ? 0 : (gameState.mode === 'AI-1' ? 1 : 2))
         const alpha = -1000000
         const beta = +1000000
         for (let square of remainingSquares) {
@@ -572,6 +572,11 @@ export const Game = () => {
                                 p-2 rounded-xl hover:scale-110 duration-200`}
                                 onClick={() => setOptions({...options, mode: 'AI-1'})}>
                                 AI lv.1
+                            </button>
+                            <button className={`${options.mode === 'AI-2' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, mode: 'AI-2'})}>
+                                AI lv.2
                             </button>
                         </div>
                     </div>
