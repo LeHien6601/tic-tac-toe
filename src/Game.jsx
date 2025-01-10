@@ -11,10 +11,10 @@ const valueOfState = {
     'TIE': 0,
     '4_WITH_0_BLOCK': 100_000,
     '4_WITH_1_BLOCK': 50_000,
-    '3_WITH_0_BLOCK': 50_000,
-    '3_WITH_1_BLOCK': 10_000,
-    '2_WITH_0_BLOCK': 10_000,
-    '2_WITH_1_BLOCK': 1_000,
+    '3_WITH_0_BLOCK': 10_000,
+    '3_WITH_1_BLOCK': 5_000,
+    '2_WITH_0_BLOCK': 1_000,
+    '2_WITH_1_BLOCK': 500,
     '1_WITH_0_BLOCK': 100,
     '1_WITH_1_BLOCK': 1
 }
@@ -51,7 +51,6 @@ export const Game = () => {
     const handleAI = () => {
         if (gameState.mode === '2P') return
         if (gameState.state !== 'WAIT-'+gameState.AI) return
-        console.log("AI play " + gameState.AI)
         //The first move of the game
         const newBoard = gameState.board.map(row => [...row])
         const newBlockSquares = gameState.blockedSquares.map(row => [...row])
@@ -70,7 +69,7 @@ export const Game = () => {
         }
         //Get all remaining squares for AI
         const remainingSquares = getAllRemainingSquare(gameState)
-        const depth = (gameState.mode === 'AI-0' ? 0 : (gameState.mode === 'AI-1' ? 1 : 2))
+        const depth = parseInt(gameState.mode.split('-')[1])
         const alpha = -1000000
         const beta = +1000000
         for (let square of remainingSquares) {
@@ -536,6 +535,11 @@ export const Game = () => {
     },[options, gameState.AI, gameState.mode, gameState.winCondition, gameState.winEvenBeBlocked, gameState.boardSize])
     useEffect(()=>{
         handleAI()
+        if (['X-WIN', 'O-WIN', 'TIE'].includes(gameState.state)) {
+            setTimeout(() => {
+                alert(gameState.state)
+            }, 1000)
+        }
     },[gameState])
     return (
         <GameContext.Provider value={{gameState, changeGameState}}>
@@ -578,6 +582,11 @@ export const Game = () => {
                                 onClick={() => setOptions({...options, mode: 'AI-2'})}>
                                 AI lv.2
                             </button>
+                            {/* <button className={`${options.mode === 'AI-3' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, mode: 'AI-3'})}>
+                                AI lv.3
+                            </button> */}
                         </div>
                     </div>
                     {options.mode !== '2P' && <div>
@@ -607,6 +616,8 @@ export const Game = () => {
                             <option value={8}>8x8</option>
                             <option value={9}>9x9</option>
                             <option value={10}>10x10</option>
+                            <option value={15}>15x15</option>
+                            <option value={20}>20x20</option>
                         </select>
                     </div>
                     <div>

@@ -25,7 +25,8 @@ export const Square = ({position}) => {
     useEffect(()=>{},[gameState])
     if (position.r < 0 || position.r >= gameState.boardSize || position.c < 0 || position.c >= gameState.boardSize) return <></>
     return (
-        <button className={`${gameState.boardSize < 5 ? "w-16 md:w-32" : "w-12 md:w-20"} aspect-square flex items-center justify-center rounded-xl 
+        <button className={`${gameState.boardSize < 5 ? "w-16 md:w-32" : (gameState.boardSize <= 10 ? "w-12 md:w-20" : "w-6 md:w-10")} 
+            aspect-square flex items-center justify-center rounded-xl 
             ${gameState.board[position.r][position.c]==="" ? "hover:bg-dark-500 duration-200 bg-dark-400" : "bg-dark-500"}
             ${gameState.lastMove.position.r === position.r && gameState.lastMove.position.c === position.c 
                 ? "outline outline-4 outline-white" : ""
@@ -33,7 +34,7 @@ export const Square = ({position}) => {
             ${gameState.blockedSquares[position.r][position.c] ? "outline outline-4 outline-red-500" : "outline outline-4 outline-green-500"}
             `} 
             disabled={gameState.board[position.r][position.c] !== ""} onClick={handleClick}>
-            <p className={`${gameState.boardSize < 5 ? "text-5xl md:text-8xl" : "text-4xl md:text-6xl"} 
+            <p className={`${gameState.boardSize < 5 ? "text-5xl md:text-8xl" : (gameState.boardSize <= 10 ? "text-4xl md:text-6xl" : "text-sm md:text-3xl")} 
                 ${(['O-WIN', 'X-WIN'].includes(gameState.board[position.r][position.c])) ? 
                     "drop-shadow-[0_10px_10px_rgba(255,255,255,0.9)]" : ""}`}>
                 {gameState.board[position.r][position.c].length > 0 ? gameState.board[position.r][position.c][0] : ""}
