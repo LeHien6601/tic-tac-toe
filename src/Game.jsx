@@ -1,13 +1,30 @@
 import { createContext, useEffect, useState } from "react"
 import { Board } from "./Board"
-
+const directory = {
+    'horizontal': [0, 1],
+    'vertical': [1, 0],
+    'topLeft': [1, 1],
+    'topRight': [-1, 1]
+}
+const valueOfState = {
+    'WIN': 1_000_000,
+    'TIE': 0,
+    '4_WITH_0_BLOCK': 100_000,
+    '4_WITH_1_BLOCK': 50_000,
+    '3_WITH_0_BLOCK': 50_000,
+    '3_WITH_1_BLOCK': 10_000,
+    '2_WITH_0_BLOCK': 10_000,
+    '2_WITH_1_BLOCK': 1_000,
+    '1_WITH_0_BLOCK': 100,
+    '1_WITH_1_BLOCK': 1
+}
 export const GameContext = createContext()
 export const Game = () => {
     const [gameState, setGameState] = useState(
         {
             state: "WAIT-X", 
             board: Array(3).fill(Array(3).fill('')),
-            lastMove: {position:{r:0, c:0}, move:''},
+            lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: 9,
             mode: '2P',
             winCondition: 3,
@@ -34,35 +51,110 @@ export const Game = () => {
         if (gameState.state !== 'WAIT-'+gameState.AI) return
         console.log("AI play " + gameState.AI)
         const newBoard = gameState.board.map(row => [...row])
-        const remainingSquares = []
-        for (let i = 0; i < gameState.boardSize; i++) {
-            for (let j = 0; j < gameState.boardSize; j++) {
-                if (newBoard[i][j] === '') 
-                    remainingSquares.push({r:i, c:j, value:0})
+        //Get all remaining squares for AI
+        const remainingSquares = getAllRemainingSquare(newBoard)
+        const depth = 3
+        const alpha = -1000000
+        const beta = +1000000
+        for (let square of remainingSquares) {
+            const nextNewBoard = newBoard.map(row => [...row])
+            nextNewBoard[square.r][square.c] = gameState.AI
+            const newState = {
+                board: nextNewBoard, 
+                lastMove: {move: gameState.AI, position:{r: square.r, c: square.c}}, 
+                remainingMove: gameState.remainingMove - 1
             }
+            square.value = minimaxAB(depth, alpha, beta, newState)
         }
-        //Get square with max value
-        let maxValue = Math.max(...remainingSquares.map(item => item.value));
-        const maxItems = remainingSquares.filter(item => item.value === maxValue);
-        const randomIndex = Math.floor(Math.random() * maxItems.length);
-        const maxItem = maxItems[randomIndex]
+        console.log(remainingSquares)
+        let bestItem
+        if (gameState.AI === 'X') {
+            //Get square with max value
+            let maxValue = Math.max(...remainingSquares.map(item => item.value));
+            const maxItems = remainingSquares.filter(item => item.value === maxValue);
+            const randomIndex = Math.floor(Math.random() * maxItems.length);
+            bestItem = maxItems[randomIndex]
+        }
+        else {
+            //Get square with min value
+            let minValue = Math.min(...remainingSquares.map(item => item.value));
+            const minItems = remainingSquares.filter(item => item.value === minValue);
+            const randomIndex = Math.floor(Math.random() * minItems.length);
+            bestItem = minItems[randomIndex]
+        }
         //AI plays
-        newBoard[maxItem.r][maxItem.c] = gameState.AI
+        newBoard[bestItem.r][bestItem.c] = gameState.AI
         changeGameState(
             {
                 board: newBoard, 
-                lastMove: {move: gameState.AI, position: {r: maxItem.r, c: maxItem.c}},
+                lastMove: {move: gameState.AI, position: {r: bestItem.r, c: bestItem.c}},
                 remainingMove: gameState.remainingMove - 1
             })
     } 
-    const checkWinState = ({lastMove, board, remainingMove}) => {
-        const directory = {
-            'horizontal': [0, 1],
-            'vertical': [1, 0],
-            'topLeft': [1, 1],
-            'topRight': [-1, 1]
+    const minimaxAB = (depth, alpha, beta, newState) => {
+        if (depth === 0 || isWinState(newState).result || newState.remainingMove === 0) {
+            return evaluateGameState(newState) * depth
         }
+        if (newState.lastMove.move === 'O') {
+            let bestVal = -1000000
+            for (let square of getAllRemainingSquare(newState.board)) {
+                const childBoard = newState.board.map(row => [...row])
+                childBoard[square.r][square.c] = 'X'
+                const childState = {
+                    board: childBoard,
+                    lastMove: {move: 'X', position: {r: square.r, c: square.c}},
+                    remainingMove: newState.remainingMove - 1
+                }
+                const childVal = minimaxAB(depth - 1, alpha, beta, childState)
+                bestVal = Math.max(bestVal, childVal)
+                alpha = Math.max(alpha, bestVal)
+                if (beta <= alpha) {
+                    break
+                }
+            }
+            return bestVal
+        }
+        else {
+            let bestVal = +1000000
+            for (let square of getAllRemainingSquare(newState.board)) {
+                const childBoard = newState.board.map(row => [...row])
+                childBoard[square.r][square.c] = 'O'
+                const childState = {
+                    board: childBoard,
+                    lastMove: {move: 'O', position: {r: square.r, c: square.c}},
+                    remainingMove: newState.remainingMove - 1
+                }
+                const childVal = minimaxAB(depth - 1, alpha, beta, childState)
+                bestVal = Math.min(bestVal, childVal)
+                alpha = Math.min(alpha, bestVal)
+                if (beta <= alpha) {
+                    break
+                }
+            }
+            return bestVal
+        }
+    }
+    const evaluateGameState = (state) => {
+        //TIE
+        if (state.remainingMove === 0) return valueOfState.TIE
+        let mul = (state.lastMove.move === 'X') ? 1 : -1
+        //WIN
+        if (isWinState(state).result) return valueOfState.WIN * mul
+        return 0
+    }
+    const getAllRemainingSquare = (board) => {
+        const remainingSquares = []
+        for (let i = 0; i < gameState.boardSize; i++) {
+            for (let j = 0; j < gameState.boardSize; j++) {
+                if (board[i][j] === '') 
+                    remainingSquares.push({r:i, c:j, value:0})
+            }
+        }
+        return remainingSquares
+    }
+    const isWinState = ({lastMove, board}) => {
         const directions = {horizontal: 1, vertical: 1, topLeft: 1, topRight: 1}
+        //Get length of the pattern in 4 directions from lastMove
         for (let direction of Object.keys(directions)) {
             for (let i = 1; i < gameState.winCondition; i++) {
                 let temp = {r: lastMove.position.r + i * directory[direction][0], c: lastMove.position.c + i * directory[direction][1]}
@@ -81,19 +173,12 @@ export const Game = () => {
                 directions[direction] = directions[direction] + 1
             }
         }
+        //Get the win direction
         for (let direction of Object.keys(directions)) {
             //WIN
             if ((directions[direction] > gameState.winCondition)
                 || (directions[direction] === gameState.winCondition && gameState.winEvenBeBlocked)) {
-                board = highlightWinningSymbol(direction, lastMove, board)
-                return (
-                    {
-                        state: lastMove.move+'-WIN',
-                        lastMove: lastMove,
-                        board: board,
-                        remainingMove: remainingMove
-                    }
-                )
+                return {result: true, direction: direction}
             }
             //Check if blocked
             if (directions[direction] === gameState.winCondition && !gameState.winEvenBeBlocked) {
@@ -121,18 +206,23 @@ export const Game = () => {
                     }
                 }
                 //WIN
-                if (block < 2) {
-                    board = highlightWinningSymbol(direction, lastMove, board)
-                    return (
-                        {
-                            state: lastMove.move+'-WIN',
-                            lastMove: lastMove,
-                            board: board,
-                            remainingMove: remainingMove
-                        }
-                    )
-                }
+                if (block < 2) return {result: true, direction: direction}
             }
+        }
+        return {result: false}
+    }
+    const checkWinState = ({lastMove, board, remainingMove}) => {  
+        const temp = isWinState({lastMove, board})
+        if (temp.result) {
+            board = highlightWinningSymbol(temp.direction, lastMove, board)
+            return (
+                {
+                    state:`${lastMove.move}-WIN`,
+                    lastMove: lastMove,
+                    board: board,
+                    remainingMove: remainingMove
+                }
+            )
         }
         if (remainingMove === 0)  {
             return (
@@ -155,12 +245,6 @@ export const Game = () => {
     }
     const highlightWinningSymbol = (direction, lastMove, board) => {
         const newBoard = board.map(row => [...row])
-        const directory = {
-            'horizontal': [0, 1],
-            'vertical': [1, 0],
-            'topLeft': [1, 1],
-            'topRight': [-1, 1]
-        }
         newBoard[lastMove.position.r][lastMove.position.c] += '-WIN'
         for (let i = 1; i < gameState.winCondition; i++) {
             let temp = {r: lastMove.position.r + i * directory[direction][0], c: lastMove.position.c + i * directory[direction][1]}
@@ -188,7 +272,7 @@ export const Game = () => {
             ...gameState,
             state: "WAIT-X", 
             board: Array(gameState.boardSize).fill(Array(gameState.boardSize).fill('')),
-            lastMove: {position:{r:0, c:0}, move:''},
+            lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: gameState.boardSize*gameState.boardSize
         })
     }
@@ -197,7 +281,7 @@ export const Game = () => {
             ...gameState,
             state: "WAIT-X",
             board: Array(options.boardSize).fill(Array(options.boardSize).fill('')),
-            lastMove: {position:{r:0, c:0}, move:''},
+            lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: options.boardSize*options.boardSize,
             ...options
         })
@@ -207,8 +291,7 @@ export const Game = () => {
         for (let field of Object.keys(options)) {
             if (options[field] !== gameState[field]) {
                 temp = true
-                console.log(options[field] +" "+ gameState[field])
-                break;
+                break
             }
         }
         setIsChanged(temp)
