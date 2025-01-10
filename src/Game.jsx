@@ -24,6 +24,7 @@ export const Game = () => {
         {
             state: "WAIT-X", 
             board: Array(3).fill(Array(3).fill('')),
+            blockedSquares: Array(3).fill(Array(3).fill(true)),
             lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: 9,
             mode: '2P',
@@ -44,29 +45,48 @@ export const Game = () => {
 
     const changeGameState = (newState) => {
         let newGameState = checkWinState(newState)
+        newGameState.blockedSquares = freeSquares(newGameState)
         setGameState({...gameState, ...newGameState})
     }
     const handleAI = () => {
         if (gameState.mode === '2P') return
         if (gameState.state !== 'WAIT-'+gameState.AI) return
         console.log("AI play " + gameState.AI)
+        //The first move of the game
         const newBoard = gameState.board.map(row => [...row])
+        const newBlockSquares = gameState.blockedSquares.map(row => [...row])
+        if (gameState.remainingMove === gameState.boardSize * gameState.boardSize) {
+            const middle = Math.floor(gameState.boardSize / 2)
+            newBoard[middle][middle] = gameState.AI
+            const newGameState = {
+                board: newBoard, 
+                lastMove: {move: gameState.AI, position: {r: middle, c: middle}},
+                remainingMove: gameState.remainingMove - 1,
+                blockedSquares: newBlockSquares
+            }
+            newGameState.blockedSquares = freeSquares(newGameState)
+            changeGameState(newGameState)
+            return
+        }
         //Get all remaining squares for AI
-        const remainingSquares = getAllRemainingSquare(newBoard)
-        const depth = 3
+        const remainingSquares = getAllRemainingSquare(gameState)
+        const depth = 2
         const alpha = -1000000
         const beta = +1000000
         for (let square of remainingSquares) {
             const nextNewBoard = newBoard.map(row => [...row])
+            const nextNewBlockedSquares = newBlockSquares.map(row => [...row])
             nextNewBoard[square.r][square.c] = gameState.AI
             const newState = {
                 board: nextNewBoard, 
                 lastMove: {move: gameState.AI, position:{r: square.r, c: square.c}}, 
-                remainingMove: gameState.remainingMove - 1
+                remainingMove: gameState.remainingMove - 1,
+                blockedSquares: nextNewBlockedSquares
             }
+            newState.blockedSquares = freeSquares(newState)
             square.value = minimaxAB(depth, alpha, beta, newState)
         }
-        console.log(remainingSquares)
+        // console.log(remainingSquares)
         let bestItem
         if (gameState.AI === 'X') {
             //Get square with max value
@@ -84,27 +104,32 @@ export const Game = () => {
         }
         //AI plays
         newBoard[bestItem.r][bestItem.c] = gameState.AI
-        changeGameState(
-            {
-                board: newBoard, 
-                lastMove: {move: gameState.AI, position: {r: bestItem.r, c: bestItem.c}},
-                remainingMove: gameState.remainingMove - 1
-            })
+        const newGameState = {
+            board: newBoard, 
+            lastMove: {move: gameState.AI, position: {r: bestItem.r, c: bestItem.c}},
+            remainingMove: gameState.remainingMove - 1,
+            blockedSquares: newBlockSquares
+        }
+        newGameState.blockedSquares = freeSquares(newGameState)
+        changeGameState(newGameState)
     } 
     const minimaxAB = (depth, alpha, beta, newState) => {
         if (depth === 0 || isWinState(newState).result || newState.remainingMove === 0) {
-            return evaluateGameState(newState) * depth
+            return evaluateGameState(newState) * (depth + 1)
         }
         if (newState.lastMove.move === 'O') {
             let bestVal = -1000000
-            for (let square of getAllRemainingSquare(newState.board)) {
+            for (let square of getAllRemainingSquare(newState)) {
                 const childBoard = newState.board.map(row => [...row])
+                const childBlockedSquares = newState.blockedSquares.map(row => [...row])
                 childBoard[square.r][square.c] = 'X'
                 const childState = {
                     board: childBoard,
                     lastMove: {move: 'X', position: {r: square.r, c: square.c}},
-                    remainingMove: newState.remainingMove - 1
+                    remainingMove: newState.remainingMove - 1,
+                    blockedSquares: childBlockedSquares
                 }
+                childState.blockedSquares = freeSquares(childState)
                 const childVal = minimaxAB(depth - 1, alpha, beta, childState)
                 bestVal = Math.max(bestVal, childVal)
                 alpha = Math.max(alpha, bestVal)
@@ -116,14 +141,17 @@ export const Game = () => {
         }
         else {
             let bestVal = +1000000
-            for (let square of getAllRemainingSquare(newState.board)) {
+            for (let square of getAllRemainingSquare(newState)) {
                 const childBoard = newState.board.map(row => [...row])
+                const childBlockedSquares = newState.blockedSquares.map(row => [...row])
                 childBoard[square.r][square.c] = 'O'
                 const childState = {
                     board: childBoard,
                     lastMove: {move: 'O', position: {r: square.r, c: square.c}},
-                    remainingMove: newState.remainingMove - 1
+                    remainingMove: newState.remainingMove - 1,
+                    blockedSquares: childBlockedSquares
                 }
+                childState.blockedSquares = freeSquares(childState)
                 const childVal = minimaxAB(depth - 1, alpha, beta, childState)
                 bestVal = Math.min(bestVal, childVal)
                 alpha = Math.min(alpha, bestVal)
@@ -140,13 +168,206 @@ export const Game = () => {
         let mul = (state.lastMove.move === 'X') ? 1 : -1
         //WIN
         if (isWinState(state).result) return valueOfState.WIN * mul
-        return 0
+        let evaluateCount = 0
+        // console.log(state.board)
+        //Horizontal
+        // console.log("horizontal " + evaluateHorizontal(state))
+        evaluateCount += evaluateHorizontal(state)
+        //Vertical
+        // console.log("vertical " + evaluateVertical(state))
+        evaluateCount += evaluateVertical(state)
+        //TopLeft
+        // console.log("top left " + evaluateTopLeft(state))
+        evaluateCount += evaluateTopLeft(state)
+        //TopRight
+        // console.log("top right " + evaluateTopRight(state))
+        evaluateCount += evaluateTopRight(state)
+        // console.log(evaluateCount)
+        return evaluateCount
     }
-    const getAllRemainingSquare = (board) => {
+    const evaluateHorizontal = (state) => {
+        let horizontalValue = 0
+        // console.log(state.board)
+        for (let row = 0; row < gameState.boardSize; row++) {
+            //Check for X
+            for (let col = 0; col <= gameState.boardSize - gameState.winCondition; col++) {
+                //Start check for pattern
+                let pattern = []
+                let empty = 0
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row][col + i]
+                    if (symbol === 'O') {
+                        col = col + i
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                // console.log(pattern)
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    horizontalValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+            
+            //Check for O
+            for (let col = 0; col <= gameState.boardSize - gameState.winCondition; col++) {
+                let pattern = []
+                let empty = 0
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row][col + i]
+                    if (symbol === 'X') {
+                        col = col + i
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    horizontalValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+        }
+        return horizontalValue
+    }
+    const evaluateVertical = (state) => {
+        let verticalValue = 0
+        // console.log(state.board)
+        for (let col = 0; col < gameState.boardSize; col++) {
+            //Check for X
+            for (let row = 0; row <= gameState.boardSize - gameState.winCondition; row++) {
+                let pattern = []
+                let empty = 0
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row + i][col]
+                    if (symbol === 'O') {
+                        row = row + i
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                // console.log(pattern)
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    verticalValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+            //Check for O
+            for (let row = 0; row <= gameState.boardSize - gameState.winCondition; row++) {
+                let pattern = []
+                let empty = 0
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row + i][col]
+                    if (symbol === 'X') {
+                        row = row + i
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    verticalValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+        }
+        return verticalValue
+    }
+    const evaluateTopLeft = (state) => {
+        let topLeftValue = 0
+        // console.log(state.board)
+        for (let row = 0; row <= gameState.boardSize - gameState.winCondition; row++) {
+            //Check for X
+            for (let col = 0; col <= gameState.boardSize - gameState.winCondition; col++) {
+                let pattern = []
+                let empty = 0
+                //Start check for pattern
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row + i][col + i]
+                    if (symbol === 'O') {
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                // console.log(pattern)
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    topLeftValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+            
+            //Check for O
+            for (let col = 0; col <= gameState.boardSize - gameState.winCondition; col++) {
+                let pattern = []
+                let empty = 0
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row + i][col + i]
+                    if (symbol === 'X') {
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    topLeftValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+        }
+        return topLeftValue
+    }
+    const evaluateTopRight = (state) => {
+        let topRightValue = 0
+        // console.log(state.board)
+        for (let row = 0; row <= gameState.boardSize - gameState.winCondition; row++) {
+            //Check for X
+            for (let col = gameState.boardSize - 1; col >= gameState.winCondition - 1; col--) {
+                let pattern = []
+                let empty = 0
+                //Start check for pattern
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row + i][col - i]
+                    if (symbol === 'O') {
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                // console.log(pattern)
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    topRightValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+            
+            //Check for O
+            for (let col = gameState.boardSize - 1; col >= gameState.winCondition - 1; col--) {
+                let pattern = []
+                let empty = 0
+                for (let i = 0; i < gameState.winCondition; i++) {
+                    const symbol = state.board[row + i][col - i]
+                    if (symbol === 'X') {
+                        break
+                    }
+                    pattern.push(symbol)
+                    empty = (symbol === '') ? empty + 1 : empty
+                }
+                if (pattern.length === gameState.winCondition && empty !== pattern.length) {
+                    // console.log("pattern " + (gameState.winCondition - empty))
+                    topRightValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                }
+            }
+        }
+        return topRightValue
+    }
+    const getAllRemainingSquare = ({board, blockedSquares}) => {
         const remainingSquares = []
         for (let i = 0; i < gameState.boardSize; i++) {
             for (let j = 0; j < gameState.boardSize; j++) {
-                if (board[i][j] === '') 
+                if (board[i][j] === '' && !blockedSquares[i][j]) 
                     remainingSquares.push({r:i, c:j, value:0})
             }
         }
@@ -212,11 +433,13 @@ export const Game = () => {
         return {result: false}
     }
     const checkWinState = ({lastMove, board, remainingMove}) => {  
+        // console.log(remainingMove)
         const temp = isWinState({lastMove, board})
         if (temp.result) {
             board = highlightWinningSymbol(temp.direction, lastMove, board)
             return (
                 {
+                    ...gameState,
                     state:`${lastMove.move}-WIN`,
                     lastMove: lastMove,
                     board: board,
@@ -227,7 +450,8 @@ export const Game = () => {
         if (remainingMove === 0)  {
             return (
                 {
-                    state:'TIE',
+                    ...gameState,
+                    state: "TIE",
                     lastMove: lastMove,
                     board: board,
                     remainingMove: remainingMove
@@ -236,6 +460,7 @@ export const Game = () => {
         }
         return (
             {
+                ...gameState,
                 state: lastMove.move === 'X' ? 'WAIT-O' : 'WAIT-X',
                 lastMove: lastMove,
                 board: board,
@@ -272,6 +497,7 @@ export const Game = () => {
             ...gameState,
             state: "WAIT-X", 
             board: Array(gameState.boardSize).fill(Array(gameState.boardSize).fill('')),
+            blockedSquares: Array(gameState.boardSize).fill(Array(gameState.boardSize).fill(true)),
             lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: gameState.boardSize*gameState.boardSize
         })
@@ -281,10 +507,22 @@ export const Game = () => {
             ...gameState,
             state: "WAIT-X",
             board: Array(options.boardSize).fill(Array(options.boardSize).fill('')),
+            blockedSquares: Array(options.boardSize).fill(Array(options.boardSize).fill(true)),
             lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: options.boardSize*options.boardSize,
             ...options
         })
+    }
+    const freeSquares = ({blockedSquares, lastMove}) => {
+        const newBlockSquares = blockedSquares.map(row => [...row]) 
+        for (let i = -1; i <= 1; i++) {
+            for (let j = -1; j <= 1; j++) {
+                if (checkValidSquare({r: lastMove.position.r + i, c: lastMove.position.c + j})) {
+                    newBlockSquares[lastMove.position.r + i][lastMove.position.c + j] = false
+                }
+            }
+        }
+        return newBlockSquares
     }
     useEffect(()=>{
         let temp = false
