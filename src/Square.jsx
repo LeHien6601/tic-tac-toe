@@ -31,7 +31,6 @@ export const Square = ({position}) => {
             ${gameState.lastMove.position.r === position.r && gameState.lastMove.position.c === position.c 
                 ? "outline outline-4 outline-white" : ""
             }
-            ${gameState.blockedSquares[position.r][position.c] ? "outline outline-4 outline-red-500" : "outline outline-4 outline-green-500"}
             `} 
             disabled={gameState.board[position.r][position.c] !== ""} onClick={handleClick}>
             <p className={`${gameState.boardSize < 5 ? "text-5xl md:text-8xl" : (gameState.boardSize <= 10 ? "text-4xl md:text-6xl" : "text-sm md:text-3xl")} 
