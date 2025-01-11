@@ -7,11 +7,11 @@ const directory = {
     'topRight': [-1, 1]
 }
 const valueOfState = {
-    'WIN': 1_000_000,
+    'WIN': 10_000_000,
     'TIE': 0,
-    '4_WITH_0_BLOCK': 100_000,
+    '4_WITH_0_BLOCK': 500_000,
     '4_WITH_1_BLOCK': 50_000,
-    '3_WITH_0_BLOCK': 10_000,
+    '3_WITH_0_BLOCK': 20_000,
     '3_WITH_1_BLOCK': 5_000,
     '2_WITH_0_BLOCK': 1_000,
     '2_WITH_1_BLOCK': 500,
@@ -85,7 +85,7 @@ export const Game = () => {
             newState.blockedSquares = freeSquares(newState)
             square.value = minimaxAB(depth, alpha, beta, newState)
         }
-        // console.log(remainingSquares)
+        console.log(remainingSquares)
         let bestItem
         if (gameState.AI === 'X') {
             //Get square with max value
@@ -181,6 +181,7 @@ export const Game = () => {
         //TopRight
         // console.log("top right " + evaluateTopRight(state))
         evaluateCount += evaluateTopRight(state)
+        console.log("evaluate")
         // console.log(evaluateCount)
         return evaluateCount
     }
