@@ -18,6 +18,7 @@ const valueOfState = {
     '1_WITH_0_BLOCK': 100,
     '1_WITH_1_BLOCK': 1
 }
+const lastMoveCoefficient = 0.8
 export const GameContext = createContext()
 export const Game = () => {
     const [gameState, setGameState] = useState(
@@ -42,14 +43,44 @@ export const Game = () => {
         winEvenBeBlocked: true
     })
     const [isChanged, setIsChanged] = useState(false)
-
+    const [log, setLog] = useState([])
+    const [winRate, setWinRate] = useState({'X-WIN': 0, 'O-WIN': 0, 'TIE': 0})
     const changeGameState = (newState) => {
         let newGameState = checkWinState(newState)
         newGameState.blockedSquares = freeSquares(newGameState)
+        setLog([...log, `${newGameState.lastMove.move}-(${newGameState.lastMove.position.r},${newGameState.lastMove.position.c})`])
+        const newWinRate = winRate
+        newWinRate[newGameState.state] = newWinRate[newGameState.state] + 1
+        setWinRate(newWinRate)
         setGameState({...gameState, ...newGameState})
     }
     const handleAI = () => {
         if (gameState.mode === '2P') return
+        if (gameState.mode === 'TEST') {
+            for (let depth = 0; depth < 3; depth++) {
+                const remainingSquares = getAllRemainingSquare(gameState)
+                const alpha = -100_000_000
+                const beta = +100_000_000
+                const newBoard = gameState.board.map(row => [...row])
+                const newBlockSquares = gameState.blockedSquares.map(row => [...row])
+                for (let square of remainingSquares) {
+                    const nextNewBoard = newBoard.map(row => [...row])
+                    const nextNewBlockedSquares = newBlockSquares.map(row => [...row])
+                    nextNewBoard[square.r][square.c] = gameState.lastMove.move === 'X' ? 'O' : 'X'
+                    const newState = {
+                        board: nextNewBoard, 
+                        lastMove: {move: gameState.lastMove.move === 'X' ? 'O' : 'X', position:{r: square.r, c: square.c}}, 
+                        remainingMove: gameState.remainingMove - 1,
+                        blockedSquares: nextNewBlockedSquares
+                    }
+                    newState.blockedSquares = freeSquares(newState)
+                    square.value = minimaxAB(depth, alpha, beta, newState)
+                }
+                // console.log('depth = ' + depth)
+                // console.log(remainingSquares)
+            }
+            return
+        }
         if (gameState.state !== 'WAIT-'+gameState.AI) return
         //The first move of the game
         const newBoard = gameState.board.map(row => [...row])
@@ -70,8 +101,8 @@ export const Game = () => {
         //Get all remaining squares for AI
         const remainingSquares = getAllRemainingSquare(gameState)
         const depth = parseInt(gameState.mode.split('-')[1])
-        const alpha = -1000000
-        const beta = +1000000
+        const alpha = -100_000_000
+        const beta = +100_000_000
         for (let square of remainingSquares) {
             const nextNewBoard = newBoard.map(row => [...row])
             const nextNewBlockedSquares = newBlockSquares.map(row => [...row])
@@ -85,7 +116,7 @@ export const Game = () => {
             newState.blockedSquares = freeSquares(newState)
             square.value = minimaxAB(depth, alpha, beta, newState)
         }
-        console.log(remainingSquares)
+        // console.log(remainingSquares)
         let bestItem
         if (gameState.AI === 'X') {
             //Get square with max value
@@ -117,7 +148,7 @@ export const Game = () => {
             return evaluateGameState(newState) * (depth + 1)
         }
         if (newState.lastMove.move === 'O') {
-            let bestVal = -1000000
+            let bestVal = -100_000_000
             for (let square of getAllRemainingSquare(newState)) {
                 const childBoard = newState.board.map(row => [...row])
                 const childBlockedSquares = newState.blockedSquares.map(row => [...row])
@@ -133,13 +164,14 @@ export const Game = () => {
                 bestVal = Math.max(bestVal, childVal)
                 alpha = Math.max(alpha, bestVal)
                 if (beta <= alpha) {
+                    // console.log("prune")
                     break
                 }
             }
             return bestVal
         }
         else {
-            let bestVal = +1000000
+            let bestVal = +100_000_000
             for (let square of getAllRemainingSquare(newState)) {
                 const childBoard = newState.board.map(row => [...row])
                 const childBlockedSquares = newState.blockedSquares.map(row => [...row])
@@ -155,6 +187,7 @@ export const Game = () => {
                 bestVal = Math.min(bestVal, childVal)
                 alpha = Math.min(alpha, bestVal)
                 if (beta <= alpha) {
+                    // console.log("prune")
                     break
                 }
             }
@@ -181,12 +214,13 @@ export const Game = () => {
         //TopRight
         // console.log("top right " + evaluateTopRight(state))
         evaluateCount += evaluateTopRight(state)
-        console.log("evaluate")
+        // console.log("evaluate")
         // console.log(evaluateCount)
         return evaluateCount
     }
     const evaluateHorizontal = (state) => {
-        let horizontalValue = 0
+        let horizontalValueX = 0
+        let horizontalValueO = 0
         // console.log(state.board)
         for (let row = 0; row < gameState.boardSize; row++) {
             //Check for X
@@ -206,7 +240,7 @@ export const Game = () => {
                 // console.log(pattern)
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    horizontalValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    horizontalValueX += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
             
@@ -225,14 +259,16 @@ export const Game = () => {
                 }
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    horizontalValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    horizontalValueO -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
         }
-        return horizontalValue
+        return (state.lastMove.move === 'X') ? horizontalValueX * lastMoveCoefficient + horizontalValueO 
+            : horizontalValueO * lastMoveCoefficient + horizontalValueX
     }
     const evaluateVertical = (state) => {
-        let verticalValue = 0
+        let verticalValueX = 0
+        let verticalValueO = 0
         // console.log(state.board)
         for (let col = 0; col < gameState.boardSize; col++) {
             //Check for X
@@ -251,7 +287,7 @@ export const Game = () => {
                 // console.log(pattern)
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    verticalValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    verticalValueX += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
             //Check for O
@@ -269,14 +305,16 @@ export const Game = () => {
                 }
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    verticalValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    verticalValueO -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
         }
-        return verticalValue
+        return (state.lastMove.move === 'X') ? verticalValueX * lastMoveCoefficient + verticalValueO 
+            : verticalValueO * lastMoveCoefficient + verticalValueX
     }
     const evaluateTopLeft = (state) => {
-        let topLeftValue = 0
+        let topLeftValueX = 0
+        let topLeftValueO = 0
         // console.log(state.board)
         for (let row = 0; row <= gameState.boardSize - gameState.winCondition; row++) {
             //Check for X
@@ -295,7 +333,7 @@ export const Game = () => {
                 // console.log(pattern)
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    topLeftValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    topLeftValueX += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
             
@@ -313,14 +351,16 @@ export const Game = () => {
                 }
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    topLeftValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    topLeftValueO -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
         }
-        return topLeftValue
+        return (state.lastMove.move === 'X') ? topLeftValueX * lastMoveCoefficient + topLeftValueO 
+            : topLeftValueO * lastMoveCoefficient + topLeftValueX
     }
     const evaluateTopRight = (state) => {
-        let topRightValue = 0
+        let topRightValueX = 0
+        let topRightValueO = 0
         // console.log(state.board)
         for (let row = 0; row <= gameState.boardSize - gameState.winCondition; row++) {
             //Check for X
@@ -339,7 +379,7 @@ export const Game = () => {
                 // console.log(pattern)
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    topRightValue += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    topRightValueX += valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
             
@@ -357,11 +397,12 @@ export const Game = () => {
                 }
                 if (pattern.length === gameState.winCondition && empty !== pattern.length) {
                     // console.log("pattern " + (gameState.winCondition - empty))
-                    topRightValue -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
+                    topRightValueO -= valueOfState[`${gameState.winCondition - empty}_WITH_0_BLOCK`]
                 }
             }
         }
-        return topRightValue
+        return (state.lastMove.move === 'X') ? topRightValueX * lastMoveCoefficient + topRightValueO 
+            : topRightValueO * lastMoveCoefficient + topRightValueX
     }
     const getAllRemainingSquare = ({board, blockedSquares}) => {
         const remainingSquares = []
@@ -493,6 +534,7 @@ export const Game = () => {
         return (position.r >= 0) && (position.r < gameState.boardSize) && (position.c >= 0) && (position.c < gameState.boardSize)
     }
     const handleRestart = () => {
+        setLog([])
         setGameState({
             ...gameState,
             state: "WAIT-X", 
@@ -503,6 +545,8 @@ export const Game = () => {
         })
     }
     const handleApplyChanges = () => {
+        setLog([])
+        setWinRate({'X-WIN': 0, 'O-WIN': 0, 'TIE': 0})
         setGameState({
             ...gameState,
             state: "WAIT-X",
@@ -588,6 +632,11 @@ export const Game = () => {
                                 onClick={() => setOptions({...options, mode: 'AI-3'})}>
                                 AI lv.3
                             </button>
+                            <button className={`${options.mode === 'TEST' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                                p-2 rounded-xl hover:scale-110 duration-200`}
+                                onClick={() => setOptions({...options, mode: 'TEST'})}>
+                                TEST
+                            </button>
                         </div>
                     </div>
                     {options.mode !== '2P' && <div>
@@ -651,6 +700,13 @@ export const Game = () => {
                             onClick={() => handleApplyChanges()}>
                             Apply changes
                         </button>
+                    </div>
+                    <div>
+                        <p>Logs</p>
+                        <div className="">
+                        <p>{`X win: ${winRate['X-WIN']}, O win: ${winRate['O-WIN']}, Tie: ${winRate['TIE']}`}</p>
+                        {log.map((item, index) => {return (<div key={`log ${index}`}>{item}</div>)})}
+                        </div>
                     </div>
                 </div>
             </div>

@@ -33,12 +33,14 @@ export const Square = ({position}) => {
             }
             `} 
             // ${gameState.blockedSquares[position.r][position.c] ? "outline outline-4 outline-red-500" : "outline outline-4 outline-green-500"}
+            // relative
             disabled={gameState.board[position.r][position.c] !== ""} onClick={handleClick}>
             <p className={`${gameState.boardSize < 5 ? "text-5xl md:text-8xl" : (gameState.boardSize <= 10 ? "text-4xl md:text-6xl" : "text-sm md:text-3xl")} 
                 ${(['O-WIN', 'X-WIN'].includes(gameState.board[position.r][position.c])) ? 
                     "drop-shadow-[0_10px_10px_rgba(255,255,255,0.9)]" : ""}`}>
                 {gameState.board[position.r][position.c].length > 0 ? gameState.board[position.r][position.c][0] : ""}
             </p>
+            {/* <p className="absolute text-black">{`${position.r},${position.c}`}</p> */}
         </button>
       );
 }
