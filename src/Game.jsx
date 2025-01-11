@@ -582,11 +582,11 @@ export const Game = () => {
                                 onClick={() => setOptions({...options, mode: 'AI-2'})}>
                                 AI lv.2
                             </button>
-                            {/* <button className={`${options.mode === 'AI-3' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
+                            <button className={`${options.mode === 'AI-3' ? 'bg-dark-400 text-white' : 'bg-white text-dark-500'}  
                                 p-2 rounded-xl hover:scale-110 duration-200`}
                                 onClick={() => setOptions({...options, mode: 'AI-3'})}>
                                 AI lv.3
-                            </button> */}
+                            </button>
                         </div>
                     </div>
                     {options.mode !== '2P' && <div>
