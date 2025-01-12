@@ -32,7 +32,8 @@ export const Game = () => {
             winCondition: 3,
             boardSize: 3,
             AI: 'O',
-            winEvenBeBlocked: true
+            winEvenBeBlocked: true,
+            reverseColor: true
         }
     )
     const [options, setOptions] = useState({
@@ -40,14 +41,12 @@ export const Game = () => {
         winCondition: 3,
         mode: '2P',
         AI: 'O',
-        reverseColor: false,
+        reverseColor: true,
         winEvenBeBlocked: true,
-        reverseColor: true
     })
     const [isChanged, setIsChanged] = useState(false)
     const [log, setLog] = useState([])
     const [winRate, setWinRate] = useState({'X-WIN': 0, 'O-WIN': 0, 'TIE': 0})
-    const [reverseColor, setReverseColor] = useState(true)
     const changeGameState = (newState) => {
         let newGameState = checkWinState(newState)
         newGameState.blockedSquares = freeSquares(newGameState)
@@ -558,9 +557,9 @@ export const Game = () => {
             blockedSquares: Array(options.boardSize).fill(Array(options.boardSize).fill(true)),
             lastMove: {position:{r:-1, c:-1}, move:''},
             remainingMove: options.boardSize*options.boardSize,
+            reverseColor: options.reverseColor,
             ...options
         })
-        setReverseColor(options.reverseColor)
     }
     const freeSquares = ({blockedSquares, lastMove}) => {
         const newBlockSquares = blockedSquares.map(row => [...row]) 
@@ -576,21 +575,13 @@ export const Game = () => {
     useEffect(()=>{
         let temp = false
         for (let field of Object.keys(options)) {
-            if (field === 'reverseColor') {
-                if (options[field] === reverseColor)
-                    continue
-                else {
-                    temp = true
-                    break
-                }
-            }
             if (options[field] !== gameState[field]) {
                 temp = true
                 break
             }
         }
         setIsChanged(temp)
-    },[options, gameState.AI, gameState.mode, gameState.winCondition, gameState.winEvenBeBlocked, gameState.boardSize, reverseColor])
+    },[options, gameState.AI, gameState.mode, gameState.winCondition, gameState.winEvenBeBlocked, gameState.boardSize])
     useEffect(()=>{
         handleAI()
         if (['X-WIN', 'O-WIN', 'TIE'].includes(gameState.state)) {
@@ -604,7 +595,7 @@ export const Game = () => {
             <div className="bg-dark-400 p-2 m-2 rounded-xl flex flex-col md:flex-row justify-center gap-5">
                 <div className=" flex flex-col gap-y-2 items-start md:items-center overflow-scroll md:overflow-clip">
                     <div className="flex w-max">
-                        <Board reverseColor={reverseColor}></Board>
+                        <Board></Board>
                     </div>
                     <p className={`${['X-WIN', 'O-WIN', 'TIE'].includes(gameState.state) 
                         ? "text-light-500 text-5xl" : "text-dark-500 text-xl"}`}>
@@ -695,7 +686,7 @@ export const Game = () => {
                     <div>
                         <p className="text-2xl">Color</p>
                         <label>
-                            <input type="checkbox" defaultChecked={reverseColor} className="scale-150" onChange={(e)=>setOptions({...options, reverseColor: e.target.checked})}/> Reverse
+                            <input type="checkbox" defaultChecked={options.reverseColor} className="scale-150" onChange={(e)=>setOptions({...options, reverseColor: e.target.checked})}/> Reverse
                         </label>
                     </div>
                     <div>
