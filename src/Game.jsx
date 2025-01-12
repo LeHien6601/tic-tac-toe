@@ -46,7 +46,7 @@ export const Game = () => {
     const [isChanged, setIsChanged] = useState(false)
     const [log, setLog] = useState([])
     const [winRate, setWinRate] = useState({'X-WIN': 0, 'O-WIN': 0, 'TIE': 0})
-    const [reverseColor, setReverseColor] = useState(false)
+    const [reverseColor, setReverseColor] = useState(true)
     const changeGameState = (newState) => {
         let newGameState = checkWinState(newState)
         newGameState.blockedSquares = freeSquares(newGameState)
@@ -693,7 +693,7 @@ export const Game = () => {
                     <div>
                         <p className="text-2xl">Color</p>
                         <label>
-                            <input type="checkbox" className="scale-150" onChange={(e)=>setOptions({...options, reverseColor: e.target.checked})}/> Reverse
+                            <input type="checkbox" defaultChecked={reverseColor} className="scale-150" onChange={(e)=>setOptions({...options, reverseColor: e.target.checked})}/> Reverse
                         </label>
                     </div>
                     <div>

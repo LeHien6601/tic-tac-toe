@@ -32,6 +32,7 @@ export const Square = ({position, reverseColor}) => {
                 ? "outline outline-4 outline-white" : ""
             }
             ${reverseColor && gameState.board[position.r][position.c]==="X" ? "text-dark-500 bg-light-500" : ""}
+            ${reverseColor && gameState.board[position.r][position.c]==="X-WIN" ? "text-dark-400 bg-light-500" : ""}
             `} 
             // ${gameState.blockedSquares[position.r][position.c] ? "outline outline-4 outline-red-500" : "outline outline-4 outline-green-500"}
             // relative
