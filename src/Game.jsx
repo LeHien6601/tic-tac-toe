@@ -59,7 +59,7 @@ export const Game = () => {
     const handleAI = () => {
         if (gameState.mode === '2P') return
         if (gameState.mode === 'TEST') {
-            for (let depth = 0; depth < 3; depth++) {
+            for (let depth = 0; depth < 4; depth++) {
                 const remainingSquares = getAllRemainingSquare(gameState)
                 const alpha = -100_000_000
                 const beta = +100_000_000
@@ -78,8 +78,8 @@ export const Game = () => {
                     newState.blockedSquares = freeSquares(newState)
                     square.value = minimaxAB(depth, alpha, beta, newState)
                 }
-                // console.log('depth = ' + depth)
-                // console.log(remainingSquares)
+                console.log('depth = ' + depth)
+                console.log(remainingSquares)
             }
             return
         }
@@ -197,13 +197,14 @@ export const Game = () => {
         }
     }
     const evaluateGameState = (state) => {
-        //TIE
-        if (state.remainingMove === 0) return valueOfState.TIE
         let mul = (state.lastMove.move === 'X') ? 1 : -1
         //WIN
         if (isWinState(state).result) return valueOfState.WIN * mul
+        //TIE
+        if (state.remainingMove === 0) return valueOfState.TIE
+        //Others
         let evaluateCount = 0
-        // console.log(state.board)
+        console.log(state.board)
         //Horizontal
         // console.log("horizontal " + evaluateHorizontal(state))
         evaluateCount += evaluateHorizontal(state)
@@ -217,7 +218,7 @@ export const Game = () => {
         // console.log("top right " + evaluateTopRight(state))
         evaluateCount += evaluateTopRight(state)
         // console.log("evaluate")
-        // console.log(evaluateCount)
+        console.log(evaluateCount)
         return evaluateCount
     }
     const evaluateHorizontal = (state) => {
