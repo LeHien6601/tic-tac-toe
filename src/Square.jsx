@@ -1,7 +1,7 @@
 import { useContext, useEffect } from "react";
 import { GameContext } from "./Game";
 
-export const Square = ({position}) => {
+export const Square = ({position, reverseColor}) => {
     const {gameState, changeGameState} = useContext(GameContext)
     const handleClick = () => {
         if (gameState.board[position.r][position.c] !== "") return
@@ -31,6 +31,7 @@ export const Square = ({position}) => {
             ${gameState.lastMove.position.r === position.r && gameState.lastMove.position.c === position.c 
                 ? "outline outline-4 outline-white" : ""
             }
+            ${reverseColor && gameState.board[position.r][position.c]==="X" ? "text-dark-500 bg-light-500" : ""}
             `} 
             // ${gameState.blockedSquares[position.r][position.c] ? "outline outline-4 outline-red-500" : "outline outline-4 outline-green-500"}
             // relative
