@@ -41,7 +41,8 @@ export const Game = () => {
         mode: '2P',
         AI: 'O',
         reverseColor: false,
-        winEvenBeBlocked: true
+        winEvenBeBlocked: true,
+        reverseColor: true
     })
     const [isChanged, setIsChanged] = useState(false)
     const [log, setLog] = useState([])
