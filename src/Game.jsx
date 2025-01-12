@@ -59,7 +59,7 @@ export const Game = () => {
     const handleAI = () => {
         if (gameState.mode === '2P') return
         if (gameState.mode === 'TEST') {
-            for (let depth = 0; depth < 4; depth++) {
+            for (let depth = 0; depth < 3; depth++) {
                 const remainingSquares = getAllRemainingSquare(gameState)
                 const alpha = -100_000_000
                 const beta = +100_000_000
@@ -78,8 +78,8 @@ export const Game = () => {
                     newState.blockedSquares = freeSquares(newState)
                     square.value = minimaxAB(depth, alpha, beta, newState)
                 }
-                console.log('depth = ' + depth)
-                console.log(remainingSquares)
+                // console.log('depth = ' + depth)
+                // console.log(remainingSquares)
             }
             return
         }
@@ -204,7 +204,7 @@ export const Game = () => {
         if (state.remainingMove === 0) return valueOfState.TIE
         //Others
         let evaluateCount = 0
-        console.log(state.board)
+        // console.log(state.board)
         //Horizontal
         // console.log("horizontal " + evaluateHorizontal(state))
         evaluateCount += evaluateHorizontal(state)
@@ -218,7 +218,7 @@ export const Game = () => {
         // console.log("top right " + evaluateTopRight(state))
         evaluateCount += evaluateTopRight(state)
         // console.log("evaluate")
-        console.log(evaluateCount)
+        // console.log(evaluateCount)
         return evaluateCount
     }
     const evaluateHorizontal = (state) => {
@@ -719,7 +719,7 @@ export const Game = () => {
                             Apply changes
                         </button>
                     </div>
-                    <div>
+                    <div className="h-[300px] overflow-y-scroll">
                         <p>Logs</p>
                         <div className="">
                         <p>{`X win: ${winRate['X-WIN']}, O win: ${winRate['O-WIN']}, Tie: ${winRate['TIE']}`}</p>
